@@ -18,19 +18,32 @@ else
 TIMECMD ?= time -v
 endif
 
-hash_OBJS = main.o
+hash_OBJS = hash.o
 
-HASH_OBJS = \
-						crypto_hash.o\
+hmac_OBJS = hmac.o
+
+constant_OBJS = constant.o
+
+OBJS= \
+			crypto_hash.o\
+			crypto_hmac.o\
 
 
 HASH_CHECKS = \
-							.md5.check\
-							.sha1.check\
-							.sha224.check\
-							.sha256.check\
-							.sha384.check\
-							.sha512.check\
+							.md5.hashcheck\
+							.sha1.hashcheck\
+							.sha224.hashcheck\
+							.sha256.hashcheck\
+							.sha384.hashcheck\
+							.sha512.hashcheck\
+
+HMAC_CHECKS = \
+							.md5.hmaccheck\
+							.sha1.hmaccheck\
+							.sha224.hmaccheck\
+							.sha256.hmaccheck\
+							.sha384.hmaccheck\
+							.sha512.hmaccheck\
 
 
 all:: check
@@ -38,33 +51,87 @@ all:: check
 .cc.o:
 	$(CXX) $(CXXFLAGS) -o $@ -c $<
 
-libnmcryptohash.a: $(HASH_OBJS)
+libnmcrypto.a: $(OBJS)
 	$(AR) cr $@ $^
 
-hash: $(hash_OBJS) libnmcryptohash.a
+constant: $(constant_OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
-.%.p1: hash
-	$(TIMECMD) ./hash -a $(subst .,,$(basename $@)) $F > $@
+check:: constant
+	./constant "" ""
+	./constant abc abc
+	./constant abc cde; test "$$?" -eq 1
+	./constant abcd abc; test "$$?" -eq 2
+	@echo '------------------'
+	@echo 'SUCCESS (constant)'
+	@echo '------------------'
 
-.%.p2:
-	$(TIMECMD) python check.py $(subst .,,$(basename $@)) $F > $@
+hash: $(hash_OBJS) libnmcrypto.a
+	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
-.%.check: .%.p1 .%.p2
+.%.hashp1: hash
+	@echo -n $@
+	@$(TIMECMD) ./hash -a $(subst .,,$(basename $@)) $F > $@
+
+.%.hashp2:
+	@echo -n $@
+	@$(TIMECMD) python check_hash.py -a $(subst .,,$(basename $@)) $F > $@
+
+.%.hashcheck: .%.hashp1 .%.hashp2
 	diff -U8 $^ > $@
 	@rm -rf $^
+	@echo
 
 check:: hash $(HASH_CHECKS)
 	@rm -rf $(HASH_CHECKS)
-	@echo -------
-	@echo SUCCESS
-	@echo -------
+	@echo '--------------'
+	@echo 'SUCCESS (hash)'
+	@echo '--------------'
+
+hmac: $(hmac_OBJS) libnmcrypto.a
+	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+.%.hmacp1: hash
+	@./hmac -a $(subst .,,$(basename $@)) $F > $@
+	@./hmac -s abc -a $(subst .,,$(basename $@)) $F >> $@
+	@./hmac -s password12345 -a $(subst .,,$(basename $@)) $F >> $@
+	@./hmac -s 'pass\0word' -a $(subst .,,$(basename $@)) $F >> $@
+	@./hmac -s aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  -a $(subst .,,$(basename $@)) $F >> $@
+	@echo Made $@
+
+.%V.hashp2:
+	$(TIMECMD) python check_hash.py -a $(subst .,,$(basename $@)) $F > $@
+
+.%.hmacp2: hmac
+	@python check_hmac.py -a $(subst .,,$(basename $@)) $F >> $@
+	@python check_hmac.py -s abc -a $(subst .,,$(basename $@)) $F >> $@
+	@python check_hmac.py -s password12345 -a $(subst .,,$(basename $@)) $F >> $@
+	@python check_hmac.py -s 'pass\0word' -a $(subst .,,$(basename $@)) $F >> $@
+	@python check_hmac.py -s aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  -a $(subst .,,$(basename $@)) $F >> $@
+	@echo Made $@
+
+
+.%.hmaccheck: .%.hmacp1 .%.hmacp2
+	diff -U8 $^ > $@
+	@rm -rf $^
+	@echo
+
+check:: hmac $(HMAC_CHECKS)
+	@rm -rf $(HMAC_CHECKS)
+	@echo '--------------'
+	@echo 'SUCCESS (hmac)'
+	@echo '--------------'
 
 clean:
+	@rm -f $(constant_OBJS)
 	@rm -f $(hash_OBJS)
-	@rm -f $(HASH_OBJS)
+	@rm -f $(hmac_OBJS)
+	@rm -f $(OBJS)
 	@rm -f $(HASH_CHECKS)
-	@rm -f libnmcryptohash.a
-	@rm -f hash
+	@rm -f $(HMAC_CHECKS)
+	@rm -f .*.*p1
+	@rm -f .*.*p2
+	@rm -f libnmcrypto.a
+	@rm -f constant hash hmac
 
-.PHONY: all clean check .%.check .%.p1 .%.p2
+.PHONY: all clean check .%.hashcheck .%.hashp1 .%.hashp2

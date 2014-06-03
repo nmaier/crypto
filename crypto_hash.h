@@ -10,6 +10,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <limits>
 
 namespace crypto {
 namespace hash {
@@ -31,7 +32,7 @@ public:
 
   virtual ~Algorithm() {}
 
-  virtual void update(const void* data, uint_fast32_t len) = 0;
+  virtual void update(const void* data, uint64_t len) = 0;
 
   inline void update(const std::string& data)
   {
@@ -43,6 +44,8 @@ public:
   virtual void reset() = 0;
 
   virtual uint_fast16_t length() const = 0;
+
+  virtual uint_fast16_t blocksize() const = 0;
 
 private:
   Algorithm(const Algorithm&) = delete;
@@ -71,7 +74,7 @@ inline uint_fast16_t length(const std::string& name)
   return create(name)->length();
 }
 
-inline std::string compute(Algorithms algo, const void* data, uint_fast32_t len)
+inline std::string compute(Algorithms algo, const void* data, uint_fast64_t len)
 {
   auto ctx = create(algo);
   ctx->update(data, len);
@@ -84,7 +87,7 @@ inline std::string compute(Algorithms algo, const std::string& data)
 }
 
 inline std::string
-compute(const std::string& name, const void* data, uint_fast32_t len)
+compute(const std::string& name, const void* data, uint_fast64_t len)
 {
   return compute(lookup(name), data, len);
 }

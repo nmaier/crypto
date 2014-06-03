@@ -29,8 +29,6 @@
 #error Unsupported byte order/endianess
 #endif
 
-using namespace crypto::hash;
-
 // Compiler hints
 #if defined(__GNUG__)
 #define likely(x) __builtin_expect(!!(x), 1)
@@ -144,9 +142,12 @@ inline uint64_t __hash_bswap(uint64_t n)
   w03 = endian(buffer[3]), w02 = endian(buffer[2]);                            \
   w01 = endian(buffer[1]), w00 = endian(buffer[0])
 
+using namespace crypto;
+using namespace crypto::hash;
+
 // Our base implementation, doing most of the work, short of |tranform|,
 // |digest| and initialization.
-template <typename word_, uint_fast8_t blocksize, uint_fast8_t statesize>
+template <typename word_, uint_fast8_t bsize, uint_fast8_t ssize>
 class AlgorithmImpl : public Algorithm
 {
 public:
@@ -161,8 +162,8 @@ protected:
   };
 
   uint_fast64_t count_;
-  buffer_t<blocksize> buffer_;
-  buffer_t<statesize> state_;
+  buffer_t<bsize> buffer_;
+  buffer_t<ssize> state_;
   uint_fast8_t offset_;
 
   virtual void transform(const word_t* buffer) = 0;
@@ -175,7 +176,7 @@ protected:
 public:
   AlgorithmImpl() {}
 
-  virtual void update(const void* data, uint_fast32_t len)
+  virtual void update(const void* data, uint64_t len)
   {
     if (unlikely(!len)) {
       return;
@@ -187,7 +188,7 @@ public:
     // We have data buffered...
     if (unlikely(offset_)) {
       const uint32_t rem = sizeof(buffer_) - offset_;
-      const auto turn = len + ((rem - len) & (rem - len) >> 31);
+      const uint32_t turn = (uint32_t)(len + ((rem - len) & (rem - len) >> 31));
       memcpy(buffer_.bytes + offset_, bytes, turn);
       len -= turn;
       bytes += turn;
@@ -238,12 +239,12 @@ public:
     // Append length, multiplied by 8 (because bits!)
     const uint_fast64_t bits = count_ << 3;
     if (sizeof(word_t) == 4) {
-      *reinterpret_cast<uint64_t*>(buffer_.words + blocksize - 2) =
+      *reinterpret_cast<uint64_t*>(buffer_.words + bsize - 2) =
         __hash_be(bits);
     }
     else {
-      buffer_.words[blocksize - 2] = 0;
-      buffer_.words[blocksize - 1] = (word_t)__hash_be(bits);
+      buffer_.words[bsize - 2] = 0;
+      buffer_.words[bsize - 1] = (word_t)__hash_be(bits);
     }
 
     // Last transform:
@@ -251,7 +252,7 @@ public:
 
 #if LITTLE_ENDIAN == BYTE_ORDER
     // On little endian, we still need to swap the bytes.
-    for (auto i = 0; i < statesize; ++i) {
+    for (auto i = 0; i < ssize; ++i) {
       state_.words[i] = __hash_bswap(state_.words[i]);
     }
 #endif // LITTLE_ENDIAN == BYTE_ORDER
@@ -261,7 +262,9 @@ public:
     return rv;
   }
 
-  virtual uint_fast16_t length() const = 0;
+  virtual uint_fast16_t blocksize() const {
+    return sizeof(buffer_);
+  }
 };
 
 // Important! Other than the SHA family, MD5 is actually LE.
