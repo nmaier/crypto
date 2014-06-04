@@ -3,7 +3,9 @@
 // Written in 2014 by Nils Maier
 
 #include "crypto_hmac.h"
+#include "crypto_rnd.h"
 
+using namespace crypto;
 using namespace crypto::hmac;
 
 HMAC::HMAC(hash::Algorithms algorithm, const char* secret, size_t length)
@@ -31,15 +33,14 @@ HMAC::HMAC(hash::Algorithms algorithm, const char* secret, size_t length)
   reset();
 }
 
-#if 0
-std::unique_ptr<HMAC> ::createRandom(const std::string& algorithm)
+std::unique_ptr<HMAC> crypto::hmac::createRandom(hash::Algorithms algorithm)
 {
-  const auto len = MessageDigest::getDigestLength(algorithm);
+  auto a = create(algorithm);
+  const auto len = a->blocksize();
   if (len == 0) {
     return nullptr;
   }
-  auto buf = make_unique<char[]>(len);
-  generateRandomData((unsigned char*)buf.get(), len);
-  return create(algorithm, buf.get(), len);
+  auto buf = std::unique_ptr<uint8_t[]>(new uint8_t[len]);
+  rnd::randomBytes(buf.get(), len);
+  return create(algorithm, (char*)buf.get(), len);
 }
-#endif

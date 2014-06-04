@@ -193,8 +193,10 @@ int main(int argc, char* const argv[])
   argc -= optind;
   argv += optind;
 
-  try {
-    auto ctx = crypto::hmac::create(algo, secret);
+  try
+  {
+    auto ctx = strcmp(secret, "rnd") ? crypto::hmac::create(algo, secret) :
+                                       crypto::hmac::createRandom(algo);
     cout << setfill('0') << setw(2);
     if (argc == 0) {
       print_hmac(ctx, "-", secret);
@@ -204,7 +206,8 @@ int main(int argc, char* const argv[])
       print_hmac(ctx, argv[i], secret);
     }
   }
-  catch (const std::exception& ex) {
+  catch (const std::exception& ex)
+  {
     cerr << "Error: " << ex.what() << endl;
     return 1;
   }

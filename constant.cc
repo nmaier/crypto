@@ -11,21 +11,6 @@
 #include <memory>
 #include <string>
 
-#include <fcntl.h>
-#ifndef _MSC_VER
-#include <unistd.h>
-#else
-#include <io.h>
-#define open _open
-#define close _close
-#define read _read
-#define fileno _fileno
-#endif
-
-#ifndef _WIN32
-#include <sys/mman.h>
-#endif // _WIN32
-
 #include "crypto_constant.h"
 
 using namespace std;

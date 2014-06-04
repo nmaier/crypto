@@ -24,9 +24,12 @@ hmac_OBJS = hmac.o
 
 constant_OBJS = constant.o
 
+random_OBJS = random.o
+
 OBJS= \
 			crypto_hash.o\
 			crypto_hmac.o\
+			crypto_rnd.o\
 
 
 HASH_CHECKS = \
@@ -78,8 +81,7 @@ hash: $(hash_OBJS) libnmcrypto.a
 	@$(TIMECMD) python check_hash.py -a $(subst .,,$(basename $@)) $F > $@
 
 .%.hashcheck: .%.hashp1 .%.hashp2
-	diff -U8 $^ > $@
-	@rm -rf $^
+	diff -U8 $^
 	@echo
 
 check:: hash $(HASH_CHECKS)
@@ -112,26 +114,40 @@ hmac: $(hmac_OBJS) libnmcrypto.a
 
 
 .%.hmaccheck: .%.hmacp1 .%.hmacp2
-	diff -U8 $^ > $@
-	@rm -rf $^
+	diff -U8 $^
 	@echo
 
 check:: hmac $(HMAC_CHECKS)
 	@rm -rf $(HMAC_CHECKS)
+	# XXX: This random test sucks, but has to suffice for now.
+	@./hmac -s rnd $F > .rnd.hmacp1
+	@./hmac -s rnd $F > .rnd.hmacp2
+	diff -U8 .rnd.hmacp1 .rnd.hmacp2 ; test "$$?" -eq 1
+	@rm -f .rnd.hmacp1 .rnd.hmacp2
 	@echo '--------------'
 	@echo 'SUCCESS (hmac)'
 	@echo '--------------'
+
+random: $(random_OBJS) libnmcrypto.a
+	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+check:: random
+	./random
+	@echo '----------------'
+	@echo 'SUCCESS (random)'
+	@echo '----------------'
 
 clean:
 	@rm -f $(constant_OBJS)
 	@rm -f $(hash_OBJS)
 	@rm -f $(hmac_OBJS)
+	@rm -f $(random_OBJS)
 	@rm -f $(OBJS)
 	@rm -f $(HASH_CHECKS)
 	@rm -f $(HMAC_CHECKS)
 	@rm -f .*.*p1
 	@rm -f .*.*p2
 	@rm -f libnmcrypto.a
-	@rm -f constant hash hmac
+	@rm -f constant hash hmac random
 
 .PHONY: all clean check .%.hashcheck .%.hashp1 .%.hashp2
