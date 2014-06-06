@@ -49,6 +49,13 @@ HMAC_CHECKS = \
 							.sha512.hmaccheck\
 
 
+all::
+	@echo
+	@echo ===========================================
+	@echo Just a note: make == make all == make check
+	@echo ===========================================
+	@echo
+
 all:: check
 
 .cc.o:

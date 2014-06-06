@@ -6,10 +6,17 @@ and big endian systems, and reasonably fast.
 
 Hashes
 ---
-* `MD5`
-* `SHA1`
-* `SHA224`
-* `SHA256`
+* `MD5` / RFC 1321
+* `SHA1` / RFC 6234
+* `SHA224` / RFC 6234
+* `SHA256` / RFC 6234
+* `SHA384` / RFC 6234
+* `SHA512` / RFC 6234
+
+HMAC
+---
+* RFC 2104 / 6234
+
 
 Compatiblity
 ---
