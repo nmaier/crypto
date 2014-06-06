@@ -33,26 +33,51 @@
 #if defined(__GNUG__)
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
+#define forceinline __attribute__((always_inline)) inline
 #else // ! __GNUG_
 #define likely(x) (x)
 #define unlikely(x) (x)
+#ifdef _MSC_VER
+#define forceinline __forceinline
+#else // ! _MSC_VER
+#define forceinline inline
+#endif // ! _MSC_VER
 #endif // ! __GNUG__
 
 // Basic operations
-#define rol(x, n) \
-  (x << n | x >> (32 - n))
-#define ror32(x, n) \
-  (x >> n | x << (32 - n))
-#define ror64(x, n) \
-  (x >> n | x << (64 - n))
+static forceinline uint32_t rol(uint32_t x, uint32_t n)
+{
+  return x << n | x >> (32 - n);
+}
+
+static forceinline uint32_t ror(uint32_t x, uint32_t n)
+{
+  return x >> n | x << (32 - n);
+}
+
+static forceinline uint64_t ror(uint64_t x, uint64_t n)
+{
+  return x >> n | x << (64 - n);
+}
 
 // SHA functions
-#define ch(b, c, d) \
-  (d ^ (b & (c ^ d)))
-#define maj(b, c, d) \
-  ((b & c) | (d & (b | c)))
-#define par(b, c, d) \
-  (b ^ c ^ d)
+template<typename T>
+static forceinline T ch(T b, T c, T d)
+{
+  return d ^ (b & (c ^ d));
+}
+
+template<typename T>
+static forceinline T maj(T b, T c, T d)
+{
+  return (b & c) | (d & (b | c));
+}
+
+template<typename T>
+static forceinline T par(T b, T c, T d)
+{
+  return b ^ c ^ d;
+}
 
 #ifdef __GNUG__
 #define __hash_maybe_memfence __asm__("" ::: "memory")
@@ -72,7 +97,7 @@
 #elif defined(__GNUG__)
 #define __hash_bswap32 __builtin_bswap32
 #else // defined(__GNUG__)
-inline uint32_t __hash_bswap32(uint32_t n)
+static forceinline uint32_t __hash_bswap32(uint32_t n)
 {
   n = ((n << 8) & 0xff00ff00) | ((n >> 8) & 0xff00ff);
   return (n << 16) | (n >> 16);
@@ -91,7 +116,7 @@ inline uint32_t __hash_bswap32(uint32_t n)
 #elif defined(__GNUG__)
 #define __hash_bswap64 __builtin_bswap64
 #else // defined(__GNUG__)
-inline uint64_t __hash_bswap64(uint64_t n)
+static forceinline uint64_t __hash_bswap64(uint64_t n)
 {
   n = ((n << 8) & 0xff00ff00ff00ff00) | ((n >> 8) & 0x00ff00ff00ff00ff);
   n = ((n << 16) & 0xffff0000ffff0000) | ((n >> 16) & 0x0000ffff0000ffff);
@@ -650,14 +675,14 @@ protected:
     __hash_maybe_memfence;
 
 #define b0(w) \
-  (ror32(w, 2) ^ ror32(w, 13) ^ ror32(w, 22))
+  (ror(w, 2) ^ ror(w, 13) ^ ror(w, 22))
 #define b1(w) \
-  (ror32(w, 6) ^ ror32(w, 11) ^ ror32(w, 25))
+  (ror(w, 6) ^ ror(w, 11) ^ ror(w, 25))
 
 #define s0(w) \
-  (ror32(w, 7) ^ ror32(w, 18) ^ (w >> 3))
+  (ror(w, 7) ^ ror(w, 18) ^ (w >> 3))
 #define s1(w) \
-  (ror32(w, 17) ^ ror32(w, 19) ^ (w >> 10))
+  (ror(w, 17) ^ ror(w, 19) ^ (w >> 10))
 
 #define r(a1, a2, a3, a4, a5, a6, a7, a8, k, w)                                \
   a4 += t = a8 + b1(a5) + ch(a5, a6, a7) + k + w;                              \
@@ -867,14 +892,14 @@ protected:
     __hash_maybe_memfence;
 
 #define b0(w) \
-  (ror64(w, 28) ^ ror64(w, 34) ^ ror64(w, 39))
+  (ror(w, 28) ^ ror(w, 34) ^ ror(w, 39))
 #define b1(w) \
-  (ror64(w, 14) ^ ror64(w, 18) ^ ror64(w, 41))
+  (ror(w, 14) ^ ror(w, 18) ^ ror(w, 41))
 
 #define s0(w) \
-  (ror64(w, 1) ^ ror64(w, 8) ^ (w >> 7))
+  (ror(w, 1) ^ ror(w, 8) ^ (w >> 7))
 #define s1(w) \
-  (ror64(w, 19) ^ ror64(w, 61) ^ (w >> 6))
+  (ror(w, 19) ^ ror(w, 61) ^ (w >> 6))
 
 #define r(a1, a2, a3, a4, a5, a6, a7, a8, k, w)                                \
   a4 += t = a8 + b1(a5) + ch(a5, a6, a7) + k + w;                              \
