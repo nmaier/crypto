@@ -17,6 +17,10 @@ HMAC
 ---
 * RFC 2104 / 6234
 
+KDF
+---
+* `HKDF` / RFC 5869 / 6234
+* `PBKDF2` / RFC 2898 / 6070
 
 Compatiblity
 ---

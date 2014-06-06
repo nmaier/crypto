@@ -18,17 +18,20 @@ else
 TIMECMD ?= time -v
 endif
 
+constant_OBJS = constant.o
+
 hash_OBJS = hash.o
 
 hmac_OBJS = hmac.o
 
-constant_OBJS = constant.o
+kdf_OBJS = kdf.o
 
 random_OBJS = random.o
 
 OBJS= \
 			crypto_hash.o\
 			crypto_hmac.o\
+			crypto_kdf.o\
 			crypto_rnd.o\
 
 
@@ -135,6 +138,15 @@ check:: hmac $(HMAC_CHECKS)
 	@echo 'SUCCESS (hmac)'
 	@echo '--------------'
 
+kdf: $(kdf_OBJS) libnmcrypto.a
+	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+check:: kdf
+	./kdf
+	@echo '-------------'
+	@echo 'SUCCESS (kdf)'
+	@echo '-------------'
+
 random: $(random_OBJS) libnmcrypto.a
 	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
@@ -148,6 +160,7 @@ clean:
 	@rm -f $(constant_OBJS)
 	@rm -f $(hash_OBJS)
 	@rm -f $(hmac_OBJS)
+	@rm -f $(kdf_OBJS)
 	@rm -f $(random_OBJS)
 	@rm -f $(OBJS)
 	@rm -f $(HASH_CHECKS)
@@ -155,6 +168,6 @@ clean:
 	@rm -f .*.*p1
 	@rm -f .*.*p2
 	@rm -f libnmcrypto.a
-	@rm -f constant hash hmac random
+	@rm -f constant hash hmac kdf random
 
 .PHONY: all clean check .%.hashcheck .%.hashp1 .%.hashp2
