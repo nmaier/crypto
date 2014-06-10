@@ -22,6 +22,8 @@ constant_OBJS = constant.o
 
 hash_OBJS = hash.o
 
+hashlen_OBJS = hashlen.o
+
 hmac_OBJS = hmac.o
 
 kdf_OBJS = kdf.o
@@ -82,13 +84,18 @@ check:: constant
 hash: $(hash_OBJS) libnmcrypto.a
 	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
 
-.%.hashp1: hash
+hashlen: $(hashlen_OBJS) libnmcrypto.a
+	$(CXX) $(CXXFLAGS) -o $@ $(LDFLAGS) $^ $(LIBS)
+
+.%.hashp1: hash hashlen
 	@echo -n $@
 	@$(TIMECMD) ./hash -a $(subst .,,$(basename $@)) $F > $@
+	@./hashlen $(subst .,,$(basename $@)) >> $@
 
 .%.hashp2:
 	@echo -n $@
 	@$(TIMECMD) python check_hash.py -a $(subst .,,$(basename $@)) $F > $@
+	@python check_hashlen.py $(subst .,,$(basename $@)) >> $@
 
 .%.hashcheck: .%.hashp1 .%.hashp2
 	diff -U8 $^
@@ -155,6 +162,14 @@ check:: random
 	@echo '----------------'
 	@echo 'SUCCESS (random)'
 	@echo '----------------'
+
+check::
+	@echo
+	@echo '==================='
+	@echo 'SUCCESS (all)'
+	@echo 'You are good to go!'
+	@echo '==================='
+
 
 clean:
 	@rm -f $(constant_OBJS)

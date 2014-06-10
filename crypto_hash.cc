@@ -1059,7 +1059,7 @@ public:
 
   virtual inline uint_fast16_t length() const
   {
-    return 28;
+    return 48;
   }
 };
 
