@@ -1,3 +1,7 @@
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
+// Written in 2014 by Nils Maier
+
 #ifndef CRYPTO_ENDIAN_H
 #define CRYPTO_ENDIAN_H
 
