@@ -1,4 +1,4 @@
-Various hash functions
+Various cryptographic functions
 ===
 
 The implemenation is supposed to be reasonably portable, incl. little endian
@@ -38,7 +38,7 @@ Python `hashlib` produces.
 Passing tests:
 
 * `Debian lenny x86_64 le, gcc-4.7`
-* `Debian wheezy mips/manta be, gcc-4.7
+* `Debian wheezy mips/manta be, gcc-4.7`
 * `OSX 10.9/Darwin x86_64 le, clang-apple-5.1`
 * `OSX 10.9/Darwin i686 le, clang-apple-5.1`
 * `OSX 10.9/Darwin x86_64 le, gcc-4.8`
@@ -55,3 +55,10 @@ Any copyright is dedicated to the Public Domain.
 http://creativecommons.org/publicdomain/zero/1.0/
 Written in 2014 by Nils Maier
 ```
+
+Status
+---
+
+This stuff is probably OK, and it has tests. Then again, it was not really peer reviewed...
+
+As for performance: It is pretty much on par with other implementation, incl. the ones found in OpenSSL and/or Apple Common Crypto. It is not meant to be the most performant implementation on earth, though.
