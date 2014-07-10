@@ -174,6 +174,7 @@ check::
 clean:
 	@rm -f $(constant_OBJS)
 	@rm -f $(hash_OBJS)
+	@rm -f $(hashlen_OBJS)
 	@rm -f $(hmac_OBJS)
 	@rm -f $(kdf_OBJS)
 	@rm -f $(random_OBJS)
