@@ -1,9 +1,9 @@
 UNAME := $(shell uname)
 CXX ?= c++
 ifdef _DEBUG
-CXXFLAGS ?= -std=c++11 -O0 -g -march=native -Werror $(ARCH)
+CXXFLAGS ?= -std=c++11 -O0 -g -march=native -Werror -Wstrict-aliasing $(ARCH)
 else
-CXXFLAGS ?= -std=c++11 -Os -march=native -Werror $(ARCH)
+CXXFLAGS ?= -std=c++11 -Os -march=native -Werror -Wstrict-aliasing $(ARCH)
 endif
 COMPILER := $(shell $(CXX) -v 2>&1)
 F = *.cc *.h *.o *.a hash* test-vectors/*
