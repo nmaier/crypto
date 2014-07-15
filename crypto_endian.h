@@ -47,7 +47,9 @@ forceinline uint32_t __crypto_bswap32(uint32_t p)
     return p;
 }
 #elif defined(__GNUG__)
-#define __crypto_bswap32 __builtin_bswap32
+forceinline uint32_t __crypto_bswap32(uint32_t p) {
+  return __builtin_bswap32(p);
+}
 #else // defined(__GNUG__)
 forceinline uint32_t __crypto_bswap32(uint32_t n)
 {
@@ -64,7 +66,9 @@ forceinline uint64_t __crypto_bswap64(uint64_t p)
   return p;
 }
 #elif defined(__GNUG__)
-#define __crypto_bswap64 __builtin_bswap64
+forceinline uint64_t __crypto_bswap64(uint64_t p) {
+  return __builtin_bswap64(p);
+}
 #else // defined(__GNUG__)
 forceinline uint64_t __crypto_bswap64(uint64_t n)
 {
@@ -97,11 +101,23 @@ inline uint64_t __crypto_bswap(uint64_t n)
 
 // __crypto_le and __crypto_be depending on byte order
 #if LITTLE_ENDIAN == BYTE_ORDER
-#define __crypto_be(n) __crypto_bswap(n)
-#define __crypto_le(n) (n)
+template<typename T>
+forceinline T __crypto_be(const T n) {
+  return __crypto_bswap(n);
+}
+template<typename T>
+forceinline T __crypto_le(const T n) {
+  return n;
+}
 #else // LITTLE_ENDIAN != WORD_ORDER
-#define __crypto_be(n) (n)
-#define __crypto_le(n) __crypto_bswap(n)
+template<typename T>
+forceinline T __crypto_be(const T n) {
+  return n;
+}
+template<typename T>
+forceinline T __crypto_le(const T n) {
+  return __crypto_bswap(n);
+}
 #endif // LITTLE_ENDIAN != WORD_ORDER
 
 } // namespace crypto
